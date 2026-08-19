@@ -564,7 +564,11 @@ export function DashboardHeader(): JSX.Element | null {
                                                     : undefined
                                             }
                                             active={!!dashboard && canEditDashboard}
-                                            callback={() => loadDashboard({ action: DashboardLoadAction.Update })}
+                                            callback={(toolOutput: { dashboard_id?: string | number }) => {
+                                                if (Number(toolOutput?.dashboard_id) === dashboard?.id) {
+                                                    loadDashboard({ action: DashboardLoadAction.Update })
+                                                }
+                                            }}
                                             position="top-right"
                                         >
                                             <AccessControlAction

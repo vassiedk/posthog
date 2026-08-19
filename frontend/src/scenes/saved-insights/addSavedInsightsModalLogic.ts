@@ -155,10 +155,9 @@ export const addSavedInsightsModalLogic = kea<addSavedInsightsModalLogicType>([
                 })
                 if (response) {
                     actions.updateInsight(response)
-                    const logic = dashboardLogic({ id: dashboardId })
-                    logic.mount()
-                    logic.actions.loadDashboard({ action: DashboardLoadAction.Update })
-                    logic.unmount()
+                    dashboardLogic.findMounted({ id: dashboardId })?.actions.loadDashboard({
+                        action: DashboardLoadAction.Update,
+                    })
                     lemonToast.success('Insight added to dashboard')
                 }
             } finally {
@@ -175,10 +174,9 @@ export const addSavedInsightsModalLogic = kea<addSavedInsightsModalLogicType>([
                 })
                 if (response) {
                     actions.updateInsight(response)
-                    const logic = dashboardLogic({ id: dashboardId })
-                    logic.mount()
-                    logic.actions.loadDashboard({ action: DashboardLoadAction.Update })
-                    logic.unmount()
+                    dashboardLogic.findMounted({ id: dashboardId })?.actions.loadDashboard({
+                        action: DashboardLoadAction.Update,
+                    })
                     lemonToast.success('Insight removed from dashboard')
                 }
             } finally {

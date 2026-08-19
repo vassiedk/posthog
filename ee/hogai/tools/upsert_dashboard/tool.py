@@ -1,11 +1,19 @@
 from typing import Literal
+from uuid import uuid4
 
 from django.db import transaction
 
 import structlog
 from pydantic import BaseModel, Field
 
-from posthog.schema import ArtifactSource, DataTableNode, HogQLQuery, InsightVizNode, QuerySchemaRoot
+from posthog.schema import (
+    ArtifactSource,
+    AssistantToolCallMessage,
+    DataTableNode,
+    HogQLQuery,
+    InsightVizNode,
+    QuerySchemaRoot,
+)
 
 from posthog.models import Dashboard, DashboardTile, Insight
 from posthog.rbac.user_access_control import UserAccessControl, access_level_satisfied_for_resource
@@ -100,7 +108,7 @@ class UpsertDashboardTool(MaxTool):
         dashboard = await self._create_dashboard_with_tiles(action.name, action.description, insights)
         output = await self._format_dashboard_output(dashboard, insights, missing_ids)
 
-        return output, None
+        return output, self._dashboard_updated_artifact(dashboard.id, output)
 
     async def _handle_update(self, action: UpdateDashboardToolArgs) -> tuple[str, ToolMessagesArtifact | None]:
         """Handle UPDATE action: update an existing dashboard."""
@@ -131,7 +139,19 @@ class UpsertDashboardTool(MaxTool):
 
         output = await self._format_dashboard_output(dashboard, all_insights, missing_ids)
 
-        return output, None
+        return output, self._dashboard_updated_artifact(dashboard.id, output)
+
+    def _dashboard_updated_artifact(self, dashboard_id: int, output: str) -> ToolMessagesArtifact:
+        return ToolMessagesArtifact(
+            messages=[
+                AssistantToolCallMessage(
+                    content=output,
+                    id=str(uuid4()),
+                    tool_call_id=self.tool_call_id,
+                    ui_payload={self.get_name(): {"dashboard_id": dashboard_id}},
+                )
+            ]
+        )
 
     async def _resolve_insights(self, insight_ids: list[str]) -> tuple[list[Insight], list[str]]:
         """

@@ -116,6 +116,19 @@ class TestUpsertDashboardTool(BaseTest):
         self.assertIn(existing_insight.id, insight_ids)
         self.assertIn(new_insight.id, insight_ids)
 
+    async def test_update_dashboard_returns_completion_payload(self):
+        dashboard = await Dashboard.objects.acreate(team=self.team, name="Existing Dashboard", created_by=self.user)
+        insight = await self._create_insight("New Insight")
+        tool = self._create_tool()
+
+        _, artifact = await tool._arun_impl(
+            UpdateDashboardToolArgs(dashboard_id=str(dashboard.id), insight_ids=[insight.short_id])
+        )
+
+        self.assertIsNotNone(artifact)
+        message = artifact.messages[0]
+        self.assertEqual(message.ui_payload, {"upsert_dashboard": {"dashboard_id": dashboard.id}})
+
     async def test_update_dashboard_append_duplicate_insight_is_ignored(self):
         dashboard = await Dashboard.objects.acreate(
             team=self.team,
